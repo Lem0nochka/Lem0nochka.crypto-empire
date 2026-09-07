@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark" data-bg="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Empire Tycoon</title>
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card: rgba(21, 28, 44, 0.94);
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+            --border: #222f43;
+            --shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+            --btn-bg: #1e293b;
+            --theme-color: #f7931a;
+            --theme-gradient: linear-gradient(135deg, #f7931a 0%, #ffb74d 100%);
+            --bg-pattern: none;
+            --event-card: rgba(21, 28, 44, 0.97);
+            --event-muted: rgba(148, 163, 184, 0.16);
+        }
+
+        [data-theme="light"] {
+            --event-card: rgba(255, 255, 255, 0.97);
+            --event-muted: rgba(15, 23, 42, 0.08);
+            --bg: #f8fafc;
+            --card: rgba(255, 255, 255, 0.94);
+            --text: #0f172a;
+            --subtext: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 15px 25px -10px rgba(0, 0, 0, 0.08);
+            --btn-bg: #f1f5f9;
+        }
+
+        body[data-coin="BTC"] { --theme-color: #f7931a; --theme-gradient: linear-gradient(135deg, #f7931a 0%, #ffb74d 100%); }
+        body[data-coin="ETH"] { --theme-color: #627eea; --theme-gradient: linear-gradient(135deg, #627eea 0%, #8a9ef5 100%); }
+        body[data-coin="LTC"] { --theme-color: #345d9d; --theme-gradient: linear-gradient(135deg, #345d9d 0%, #5c85c7 100%); }
+
+        /* Уникальные легкие CSS-фоны: без тяжелых изображений и fixed background */
+        html, body { background: #0b0f19; }
+        body[data-bg="default"] { background: radial-gradient(circle at 50% 15%, #1d2840 0%, #0b0f19 72%); }
+        body[data-bg="neon"] { background: radial-gradient(circle at 15% 20%, rgba(124,58,237,.34), transparent 32%), radial-gradient(circle at 85% 75%, rgba(236,72,153,.24), transparent 34%), linear-gradient(135deg,#080b14,#1e1b4b); }
+        body[data-bg="emerald"] { background: radial-gradient(circle at 50% -10%, rgba(16,185,129,.32), transparent 42%), radial-gradient(circle at 80% 90%, rgba(20,184,166,.16), transparent 35%), linear-gradient(135deg,#022c22,#07131a); }
+        body[data-bg="beach"] { background: radial-gradient(circle at 78% 14%, rgba(255,236,153,.42), transparent 10%), radial-gradient(ellipse at 50% 72%, rgba(14,165,233,.38), transparent 38%), linear-gradient(180deg,#7dd3fc 0%,#38bdf8 38%,#f8e7b5 39%,#e8c98d 58%,#d6a86c 100%); }
+        body[data-bg="space"] { background: radial-gradient(circle at 25% 25%, rgba(99,102,241,.28), transparent 25%), radial-gradient(circle at 78% 12%, rgba(168,85,247,.22), transparent 20%), radial-gradient(circle at 12% 82%, rgba(59,130,246,.14), transparent 20%), #030014; }
+        body[data-bg="mars"] { background: radial-gradient(circle at 72% 15%, rgba(251,146,60,.25), transparent 18%), radial-gradient(circle at 20% 80%, rgba(127,29,29,.38), transparent 32%), linear-gradient(135deg,#450a0a,#111827); }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            color: var(--text);
+            transition: color 0.2s ease;
+            width: 100%;
+            height: 100dvh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            padding: 10px;
+            overflow: hidden;
+            position: relative;
+            isolation: isolate;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body::before { content:""; position:fixed; inset:0; pointer-events:none; z-index:-1; opacity:.38; background-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,.06) 0 1px, transparent 1px); background-size: 28px 28px; }
+        body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:-1; opacity:0; transition:opacity .3s ease; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.13), transparent 48%); }
+
+        /* Компактная панель события — больше не перекрывает игровой интерфейс */
+        /* Компактное событие: возвращено во всплывающий верхний формат, но без перекрытия игры. */
+        .event-widget-topleft {
+            position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+            width: min(440px, calc(100vw - 28px)); min-height:44px;
+            display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px;
+            padding:7px 11px; border:1px solid var(--border); border-radius:14px;
+            background:var(--event-card); box-shadow:0 8px 20px rgba(0,0,0,.24); transition:background .25s ease,border-color .25s ease,color .25s ease;
+            z-index:50; pointer-events:none;
+        }
+        .event-label { display:flex; align-items:center; gap:7px; color:var(--subtext); font-size:9px; font-weight:900; letter-spacing:.7px; white-space:nowrap; }
+        .event-label b { color:var(--theme-color); font-size:9px; }
+        .event-title { min-width:0; color:var(--text); font-size:12px; font-weight:850; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .event-timer { color:var(--subtext); font-size:10px; font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+        .event-center-banner { display:none !important; }
+
+        @keyframes pulseBanner {
+            0%, 100% { box-shadow: 0 0 15px rgba(247, 147, 26, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(247, 147, 26, 0.8); }
+        }
+
+        /* Главный контейнер со смещением вниз */
+        .container {
+            width:100%; max-width:1480px; height:calc(100% - 58px); margin-top:58px;
+            display:grid; grid-template-columns:minmax(360px,440px) minmax(0,1fr);
+            grid-template-rows:auto minmax(0,1fr);
+            gap:10px; z-index:1; position:relative; min-height:0;
+        }
+
+        @media (max-width: 1100px) {
+            body { overflow:hidden; height:100dvh; min-height:100dvh; }
+            .container { grid-template-columns:1fr; grid-template-rows:minmax(0,42%) minmax(0,58%); height:calc(100% - 54px); margin-top:54px; }
+            .event-widget-topleft { width:calc(100vw - 20px); top:7px; grid-template-columns:auto minmax(0,1fr); }
+            .event-timer { grid-column:2; font-size:9px; margin-top:-2px; }
+            .container > .card { min-height:0; }
+        }
+
+        .card {
+            background: var(--card); border-radius:20px;
+            padding:16px; border:1px solid var(--border); box-shadow:var(--shadow);
+            display:flex; flex-direction:column; position:relative; min-height:0; overflow:hidden;
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .usd-pill {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 15px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .theme-btn {
+            flex: 0 0 96px;
+            width: 96px !important;
+            min-width: 96px !important;
+            max-width: 96px !important;
+            height: 42px !important;
+            min-height: 42px !important;
+            max-height: 42px !important;
+            background: var(--btn-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 96px;
+            height: 42px;
+            min-width: 96px;
+            padding: 0 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            flex: 0 0 96px;
+            line-height: 1;
+        }
+        .theme-btn .ui-icon { width:18px; height:18px; flex:0 0 18px; }
+        .theme-btn > span:last-child { display:inline-block; line-height:1; }
+
+        .crypto-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .coin-tab {
+            flex: 1;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--btn-bg);
+            color: var(--text);
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .coin-tab.active {
+            background: var(--theme-gradient);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        }
+
+        .balance-box { text-align: center; margin: 12px 0; }
+        .balance-title { font-size: 13px; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+        .balance-value { font-size: 30px; font-weight: 900; color: var(--theme-color); margin: 8px 0; font-variant-numeric: tabular-nums; }
+        
+        .stats-pills {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--btn-bg);
+            padding: 14px 18px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .live-pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+            animation: pulseDot 1.2s infinite ease-in-out;
+            margin-right: 6px;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.4); opacity: 1; }
+        }
+
+        .click-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 26px 0;
+            position: relative;
+        }
+
+        .coin-btn {
+            width: 210px;
+            height: 210px;
+            border-radius: 50%;
+            background: var(--theme-gradient);
+            border: 9px solid rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+            outline: none;
+            position: relative;
+            will-change: transform;
+        }
+
+        .coin-btn:active { transform: scale(0.92) !important; }
+
+        .coin-btn svg {
+            width: 130px;
+            height: 130px;
+            display: block;
+            pointer-events: none;
+        }
+
+        .floating-text {
+            position: absolute;
+            font-weight: 900;
+            color: var(--theme-color);
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            font-size: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+        }
+
+        .menu-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            overflow-x: auto;
+        }
+
+        .menu-tab {
+            flex: 1;
+            padding: 12px 10px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: var(--subtext);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .menu-tab.active { background: var(--btn-bg); color: var(--theme-color); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .upgrades-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        @media (max-width: 700px) {
+            .upgrades-grid { grid-template-columns: 1fr; }
+        }
+
+        .column-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--subtext);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Фикс скролла без урезания теней */
+        .list-container{display:flex;flex-direction:column;gap:10px;max-height:560px;min-height:0;overflow-y:auto;padding:4px 8px 8px;margin:0 -8px;scroll-behavior:auto;overscroll-behavior:contain;scrollbar-gutter:stable;}
+
+        .list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .list-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        /* Общие карточки элементов */
+        .item-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: var(--btn-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            gap: 12px;
+            position: relative;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        .item-card:hover {
+            z-index: 2;
+        }
+
+        /* Строгое выравнивание карточек роскоши по линейке */
+        .luxury-card {
+            display: grid;
+            grid-template-columns: 44px 1fr 130px;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 18px;
+            background: var(--btn-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            position: relative;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .luxury-card:hover {
+            z-index: 2;
+        }
+
+        .lux-icon-box {
+            color: var(--theme-color);
+            font-size: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+        }
+        .lux-svg { width:38px; height:38px; display:block; }
+
+        .lux-info-box {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .lux-title {
+            font-weight: 800;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lux-perk {
+            font-size: 12px;
+            color: #22c55e;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lux-cost {
+            font-size: 12px;
+            color: var(--subtext);
+            font-weight: 600;
+        }
+
+        /* Эффекты наведения с защитой от среза тени */
+        button, .coin-tab, .menu-tab, .buy-btn, .quick-btn, .theme-btn, .item-card, .luxury-card {
+            transition: transform 0.12s ease, background 0.12s ease;
+        }
+
+        button:hover:not(:disabled),.coin-tab:hover:not(:disabled),.menu-tab:hover:not(:disabled),.quick-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06);cursor:pointer;}
+        .theme-btn:hover:not(:disabled),#themeToggle:active{filter:brightness(1.06);cursor:pointer;}
+        #soundToggleBtn{transition:none!important;}
+        #soundToggleBtn:hover:not(:disabled){filter:brightness(1.06);cursor:pointer;}
+        .list-container .buy-btn:hover:not(:disabled),.luxury-card .buy-btn:hover:not(:disabled){box-shadow:none;}
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+            filter: brightness(0.95);
+        }
+
+        button:disabled {
+            opacity: 0.45 !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+            box-shadow: none !important;
+            filter: none !important;
+        }
+
+        .buy-btn {
+            background: var(--theme-color);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .exchange-box {
+            background: var(--btn-bg);
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .quick-btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-btn {
+            flex: 1;
+            background: rgba(247, 147, 26, 0.12);
+            color: var(--theme-color);
+            border: 1px solid var(--theme-color);
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .exchange-input {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .rebirth-box {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(247, 147, 26, 0.08);
+            border: 1px dashed var(--theme-color);
+            text-align: center;
+        }
+
+        /* Внутриигровые уведомления */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--card);
+            border: 1px solid var(--theme-color);
+            color: var(--text);
+            padding: 14px 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter:none;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            pointer-events: auto;
+            max-width: 380px;
+        }
+
+        /* Кнопка отключения/включения звука справа снизу */
+        .sound-widget-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 52px;
+            min-width: 52px;
+            height: 52px;
+            min-height: 52px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 999;
+            backdrop-filter:none;
+            box-sizing: border-box;
+            padding: 0;
+            flex: 0 0 52px;
+            line-height: 1;
+        }
+        .sound-widget-btn .ui-icon { width:20px !important; height:20px !important; min-width:20px; min-height:20px; flex:0 0 20px; }
+        .sound-widget-btn { width:52px !important; min-width:52px !important; max-width:52px !important; height:52px !important; min-height:52px !important; max-height:52px !important; padding:0 !important; flex:0 0 52px !important; }
+        .sound-widget-btn:hover,.sound-widget-btn:active { transform:none !important; filter:none !important; }
+        .theme-btn:hover,.theme-btn:active { transform:none !important; }
+        .help-widget-btn:hover,.help-widget-btn:active,.reset-widget-btn:hover,.reset-widget-btn:active { transform:none !important; }
+
+        .utility-row { display:flex; align-items:center; gap:6px; }
+        .reset-widget-btn{position:fixed;top:24px;right:24px;z-index:999;width:auto;height:38px;padding:0 13px;border-radius:11px;border:1px solid rgba(239,68,68,.35);background:var(--card);color:#ef4444;font-size:11px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.18);contain:layout paint;}
+        .reset-widget-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
+        .reset-widget-btn:active{transform:translateY(1px);}
+        .lang-btn { min-width:56px; }
+        .tab-content { min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color: var(--theme-color) transparent; padding-right:4px; }
+        .tab-content::-webkit-scrollbar, .list-container::-webkit-scrollbar, .menu-nav::-webkit-scrollbar { width:6px; height:6px; }
+        .tab-content::-webkit-scrollbar-track, .list-container::-webkit-scrollbar-track, .menu-nav::-webkit-scrollbar-track { background:transparent; }
+        .tab-content::-webkit-scrollbar-thumb, .list-container::-webkit-scrollbar-thumb, .menu-nav::-webkit-scrollbar-thumb { background:var(--theme-color); border-radius:99px; }
+        .tab-content::-webkit-scrollbar-thumb:hover, .list-container::-webkit-scrollbar-thumb:hover { background:var(--theme-color); }
+        .list-container { min-height:0; scrollbar-width:thin; scrollbar-color: var(--theme-color) transparent; }
+        .menu-nav { scrollbar-width:thin; scrollbar-color:var(--theme-color) transparent; }
+        .menu-nav { flex-shrink:0; }
+        button{contain:layout;}
+        .coin-btn { contain:layout paint; }
+        @media (max-width:700px) { .event-widget-topleft{grid-template-columns:1fr auto;} .event-widget-topleft>div:nth-child(2){grid-column:1;} .container{gap:8px;} .card{padding:12px;} }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+
+        .ui-icon{width:18px;height:18px;display:inline-flex;vertical-align:middle;flex:0 0 18px}.ui-icon.mini{width:15px;height:15px;flex-basis:15px;margin-right:4px}.ui-icon svg{width:100%;height:100%;display:block}.menu-tab{display:flex;align-items:center;justify-content:center;gap:6px}.background-card{min-height:94px;align-items:center}.bg-preview{width:86px;height:60px;border-radius:12px;border:1px solid var(--border);flex:0 0 86px;position:relative;overflow:hidden}.bg-preview::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 45%)}.bg-preview[data-bg="default"]{background:radial-gradient(circle at 50% 20%,#334155,#0b0f19)}.bg-preview[data-bg="neon"]{background:linear-gradient(135deg,#4c1d95,#be185d)}.bg-preview[data-bg="emerald"]{background:linear-gradient(135deg,#065f46,#0f172a)}.bg-preview[data-bg="beach"]{background:linear-gradient(180deg,#38bdf8 0 55%,#075985 56%)}.bg-preview[data-bg="space"]{background:radial-gradient(circle at 70% 25%,#8b5cf6 0 3%,transparent 4%),linear-gradient(135deg,#020617,#312e81)}.bg-preview[data-bg="mars"]{background:linear-gradient(135deg,#7f1d1d,#111827)}.exchange-preview{margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.035);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px}.exchange-preview strong{color:#22c55e;font-size:15px}
+
+
+        .help-widget-btn,.reset-widget-btn{position:fixed;top:12px;z-index:60;height:36px;border:1px solid var(--border);border-radius:11px;background:var(--event-card);color:var(--text);font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+        .help-widget-btn{right:112px;width:36px;font-size:16px}.reset-widget-btn{right:12px;padding:0 13px;font-size:11px}
+        .help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
+        .help-overlay.open{display:flex}.help-modal{width:min(560px,100%);max-height:min(82dvh,680px);overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+        .help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.help-modal-head>div:first-child>div:first-child{font-size:20px;font-weight:900}.help-subtitle{font-size:12px;color:var(--subtext);margin-top:3px}.help-close{width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--btn-bg);color:var(--text);font-size:22px;cursor:pointer}.help-list{display:grid;gap:9px}.help-list>div{padding:11px 12px;border:1px solid var(--border);border-radius:13px;background:rgba(255,255,255,.025)}.help-list b{display:block;font-size:13px;margin-bottom:4px;color:var(--theme-color)}.help-list span{display:block;font-size:12px;line-height:1.45;color:var(--subtext)}
+        @media(max-width:700px){.help-widget-btn{right:92px}.reset-widget-btn{right:10px}.event-widget-topleft{top:54px}.container{margin-top:96px;height:calc(100% - 102px)}}
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(50px) scale(0.9); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to { opacity: 0; transform: translateX(50px) scale(0.9); }
+        }
+
+        /* Стабильные размеры служебных кнопок: смена состояния не меняет геометрию. */
+        #themeToggle{width:96px!important;min-width:96px!important;max-width:96px!important;height:42px!important;min-height:42px!important;max-height:42px!important;flex:0 0 96px!important;padding:0 12px!important;box-sizing:border-box!important;}
+        #themeToggle .ui-icon{width:18px!important;height:18px!important;min-width:18px!important;max-width:18px!important;min-height:18px!important;max-height:18px!important;flex:0 0 18px!important;}
+        #soundToggleBtn{width:52px!important;min-width:52px!important;max-width:52px!important;height:52px!important;min-height:52px!important;max-height:52px!important;flex:0 0 52px!important;padding:0!important;box-sizing:border-box!important;}
+        #soundToggleBtn .ui-icon,#soundToggleBtn svg{width:20px!important;height:20px!important;min-width:20px!important;max-width:20px!important;min-height:20px!important;max-height:20px!important;flex:0 0 20px!important;}
+        #themeToggle:hover,#themeToggle:active,#soundToggleBtn:hover,#soundToggleBtn:active{transform:none!important;}
+    </style>
+</head>
+<body data-coin="BTC">
+
+<!-- Внутриигровые уведомления -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Кнопка включения/выключения звука -->
+<button id="soundToggleBtn" class="sound-widget-btn" title="Включить/Выключить звук"><span class="ui-icon" data-icon="soundOn"></span></button>
+<button id="helpGameBtn" class="help-widget-btn" title="Как играть">?</button>
+<button id="resetGameBtn" class="reset-widget-btn" title="Сбросить весь прогресс">Сброс</button>
+
+<!-- Справка по управлению -->
+<div id="helpOverlay" class="help-overlay" aria-hidden="true">
+    <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <div class="help-modal-head"><div><div id="helpTitle">Как играть</div><div class="help-subtitle">Короткая инструкция</div></div><button id="helpCloseBtn" class="help-close" aria-label="Закрыть">×</button></div>
+        <div class="help-list">
+            <div><b>1. Майнинг</b><span>Нажимайте на монету, чтобы получать криптовалюту. Авто-майнинг приносит её каждую секунду.</span></div>
+            <div><b>2. Улучшения</b><span>Тратьте криптовалюту на усиление клика и авто-майнинга. Чем выше уровень, тем дороже следующий.</span></div>
+            <div><b>3. Обмен</b><span>Продавайте криптовалюту за USD или покупайте её. Курс меняется со временем, перед обменом показывается точный результат.</span></div>
+            <div><b>4. Роскошь и фоны</b><span>Покупайте предметы за USD, получайте постоянные бонусы и открывайте новые фоны.</span></div>
+            <div><b>5. События</b><span>Каждые несколько минут рынок получает случайное событие на 3 минуты. Описание эффекта всегда указано в виджете.</span></div>
+            <div><b>6. Халвинг</b><span>Когда накопите нужное количество криптовалюты, можно сбросить её ради постоянного множителя.</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Виджет событий (Левый верхний угол) -->
+<div class="event-widget-topleft" aria-live="polite">
+    <div class="event-label"><span>СОБЫТИЯ</span><b id="eventWidgetStatus">Ожидание</b></div>
+    <div><div id="eventWidgetTitle" class="event-title">Стабильный рынок</div><div id="eventWidgetDesc" style="font-size:10px;color:var(--subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;">Рынок спокоен. Бонусов от события нет.</div></div>
+    <div id="eventWidgetTimer" class="event-timer">След. событие через: 05:00</div>
+</div>
+
+<!-- Центральное уведомление об активном событии (Верхний центр) -->
+<div id="centerEventBanner" class="event-center-banner" style="display: none;">
+    <div style="font-size: 11px; font-weight: 800; color: var(--theme-color); letter-spacing: 1px;">⚡ АКТИВНОЕ СОБЫТИЕ ⚡</div>
+    <div id="centerEventTitle" style="font-size: 18px; font-weight: 900; margin: 4px 0;">БУЛЛРАН!</div>
+    <div id="centerEventDesc" style="font-size: 13px; color: var(--subtext);">Все доходы x2! До конца: <b id="centerEventTimer">03:00</b></div>
+</div>
+
+<div class="container">
+    <!-- Левая панель кликера -->
+    <div class="card">
+        <div class="top-nav">
+            <div class="usd-pill" id="usdDisplay">$0.00</div>
+            <div class="utility-row">
+                <button class="theme-btn" id="themeToggle"><span class="ui-icon" data-icon="theme"></span><span>Тема</span></button>
+            </div>
+        </div>
+
+        <div class="crypto-tabs">
+            <button class="coin-tab active" data-coin="BTC">Bitcoin</button>
+            <button class="coin-tab" data-coin="ETH">Ethereum</button>
+            <button class="coin-tab" data-coin="LTC">Litecoin</button>
+        </div>
+
+        <div class="balance-box">
+            <div class="balance-title" id="coinTitle">Баланс Bitcoin</div>
+            <div class="balance-value" id="balanceDisplay">0.00000000 BTC</div>
+        </div>
+
+        <div class="stats-pills">
+            <div class="stat-row">
+                <span style="color: var(--subtext);"><span class="ui-icon mini" data-icon="click"></span>За один клик:</span>
+                <span id="clickRateDisplay" style="color: var(--theme-color);">+0.00000001 BTC</span>
+            </div>
+            <div class="stat-row">
+                <span style="color: var(--subtext);"><span class="live-pulse"></span><span class="ui-icon mini" data-icon="auto"></span>Доход в секунду:</span>
+                <span id="incomeRateDisplay" style="color: #22c55e;">+0.00000000 BTC/с</span>
+            </div>
+        </div>
+
+        <div class="click-area">
+            <button class="coin-btn" id="coinBtn">
+                <svg id="coinIcon" viewBox="0 0 64 64"></svg>
+            </button>
+        </div>
+
+        <div class="rebirth-box">
+            <h4 style="font-size: 14px;">Халвинг (Перерождение)</h4>
+            <p style="font-size: 12px; color: var(--subtext); margin: 6px 0;" id="rebirthDesc">Сброс валюты ради множителя <b>x2</b>.</p>
+            <button class="buy-btn" id="rebirthBtn" style="width: 100%; margin-top: 8px;">Сделать Халвинг (1.00 BTC)</button>
+        </div>
+    </div>
+
+    <!-- Правая панель управления -->
+    <div class="card">
+        <div class="menu-nav">
+            <button class="menu-tab active" data-tab="upgrades">🛠️ Улучшения</button>
+            <button class="menu-tab" data-tab="exchange">💱 Обменник</button>
+            <button class="menu-tab" data-tab="luxury">🏎️ Роскошь</button>
+            <button class="menu-tab" data-tab="backgrounds">🖼️ Фоны</button>
+            <button class="menu-tab" data-tab="tasks">🎯 Задания</button>
+            <button class="menu-tab" data-tab="leaders">🏆 Лидеры</button>
+        </div>
+
+        <!-- Улучшения -->
+        <div class="tab-content active" id="tab-upgrades">
+            <div class="upgrades-grid">
+                <div>
+                    <div class="column-title">👆 Ручной Клик</div>
+                    <div class="list-container" id="clickUpgradesContainer"></div>
+                </div>
+                <div>
+                    <div class="column-title">🤖 Авто-Майнинг</div>
+                    <div class="list-container" id="autoUpgradesContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Обменник -->
+        <div class="tab-content" id="tab-exchange">
+            <div class="exchange-box">
+                <h4 style="font-size: 15px;">Продать криптовалюту за $USD</h4>
+                <p style="font-size: 12px; color: var(--subtext); margin-top:3px;">Курс: <span id="currentRateText">1 BTC = $65,000</span> (Комиссия 5%)</p>
+                <div class="input-group">
+                    <input type="number" id="cryptoToSellInput" class="exchange-input" placeholder="Количество">
+                </div>
+                <div class="quick-btn-group">
+                    <button class="quick-btn" onclick="setSellPercent(0.25)">25%</button>
+                    <button class="quick-btn" onclick="setSellPercent(0.50)">50%</button>
+                    <button class="quick-btn" onclick="setSellPercent(0.75)">75%</button>
+                    <button class="quick-btn" onclick="setSellPercent(1.00)">Всё (100%)</button>
+                </div>
+                <div class="exchange-preview"><span>Вы получите</span><strong id="sellPreview">$0.00</strong></div><button class="buy-btn" id="sellCryptoBtn" style="width: 100%; margin-top: 12px; padding: 12px;">Продать в $USD</button>
+            </div>
+
+            <div class="exchange-box">
+                <h4 style="font-size: 15px;">Купить криптовалюту за $USD</h4>
+                <p style="font-size: 12px; color: var(--subtext); margin-top:3px;">Купите крипту для выполнения заданий или накоплений</p>
+                <div class="input-group">
+                    <input type="number" id="usdToBuyInput" class="exchange-input" placeholder="Сумма в $USD">
+                </div>
+                <div class="quick-btn-group">
+                    <button class="quick-btn" onclick="setBuyPercent(0.25)">25%</button>
+                    <button class="quick-btn" onclick="setBuyPercent(0.50)">50%</button>
+                    <button class="quick-btn" onclick="setBuyPercent(0.75)">75%</button>
+                    <button class="quick-btn" onclick="setBuyPercent(1.00)">Всё (100%)</button>
+                </div>
+                <div class="exchange-preview"><span>Вы получите</span><strong id="buyPreview">0.00000000 BTC</strong></div><button class="buy-btn" id="buyCryptoBtn" style="width: 100%; margin-top: 12px; padding: 12px;">Купить Крипту</button>
+            </div>
+        </div>
+
+        <!-- Роскошь -->
+        <div class="tab-content" id="tab-luxury">
+            <div class="list-container" id="luxuryContainer"></div>
+        </div>
+
+        <!-- Фоны -->
+        <div class="tab-content" id="tab-backgrounds">
+            <div class="column-title">🖼️ Кастомизация фонов</div>
+            <div class="list-container" id="backgroundsContainer"></div>
+        </div>
+
+        <!-- Задания -->
+        <div class="tab-content" id="tab-tasks">
+            <div class="list-container" id="tasksContainer"></div>
+        </div>
+
+        <!-- Таблица лидеров -->
+        <div class="tab-content" id="tab-leaders">
+            <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+                <button class="menu-tab active" id="leaderBtcBtn" style="border: 1px solid var(--border);" onclick="switchLeaderTab('BTC')">BTC</button>
+                <button class="menu-tab" id="leaderEthBtn" style="border: 1px solid var(--border);" onclick="switchLeaderTab('ETH')">ETH</button>
+                <button class="menu-tab" id="leaderLtcBtn" style="border: 1px solid var(--border);" onclick="switchLeaderTab('LTC')">LTC</button>
+            </div>
+            <div class="list-container" id="leaderboardContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SATOSHI = 100000000;
+
+    // Автономная звуковая система (Web Audio API) без внешних файлов
+    const AudioEngine = {
+        ctx: null,
+        muted: false,
+        init() {
+            if (!this.ctx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) this.ctx = new AudioCtx();
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        },
+        playClick() {
+            if (this.muted || !this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+        },
+        playBtn() {
+            if (this.muted || !this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(); osc.stop(this.ctx.currentTime + 0.04);
+        },
+        playExchange() {
+            if (this.muted || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.06 + 0.1);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now + idx * 0.06); osc.stop(now + idx * 0.06 + 0.1);
+            });
+        },
+        playTask() {
+            if (this.muted || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+                gain.gain.setValueAtTime(0.15, now + idx * 0.07);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.07 + 0.15);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now + idx * 0.07); osc.stop(now + idx * 0.07 + 0.15);
+            });
+        },
+        playEvent() {
+            if (this.muted || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(280, now);
+            osc.frequency.linearRampToValueAtTime(560, now + 0.2);
+            osc.frequency.linearRampToValueAtTime(380, now + 0.4);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(now); osc.stop(now + 0.45);
+        }
+    };
+
+    const SVG_ICONS = {
+        BTC: `<circle cx="32" cy="32" r="32" fill="#F7931A"/><path fill="#FFF" d="M46.1 27.4c.6-4.2-2.6-6.5-7-8l1.4-5.7-3.5-.9-1.4 5.5c-.9-.2-1.9-.4-2.8-.7l1.4-5.6-3.5-.9-1.4 5.7c-.8-.2-1.5-.4-2.3-.5l.1-.3-4.8-1.2-1 3.8s2.6.6 2.5.6c1.4.4 1.7 1.3 1.6 2l-1.6 6.5c.1 0 .2.1.4.2l-.4-.1-2.3 9.1c-.2.5-.6 1.2-1.6.9 0 .1-2.5-.6-2.5-.6l-1.8 4.2 4.6 1.1c.9.2 1.7.5 2.6.7l-1.5 5.9 3.5.9 1.4-5.7c1 .3 1.9.5 2.8.7l-1.4 5.6 3.5.9 1.4-5.7c6 1.1 10.5.7 12.4-4.8 1.5-4.4-.1-7-3.3-8.6 2.3-.5 4-2 4.5-5.1zm-8.1 11.2c-1.1 4.4-8.5 2-10.9 1.4l1.9-7.8c2.4.6 10.1 1.8 9 6.4zm1.1-11.3c-1 4-7.2 2-9.2 1.5l1.8-7.1c2 .5 8.4 1.5 7.4 5.6z"/>`,
+        ETH: `<circle cx="32" cy="32" r="32" fill="#627EEA"/><g transform="translate(18.2, 9.3) scale(0.108)"><path fill="#FFFFFF" d="M127.961 0l-2.795 9.5v275.668l2.795 2.79 127.962-75.638z"/><path fill="#C0CBF7" d="M127.962 0L0 212.32l127.962 75.639V154.158z"/><path fill="#FFFFFF" d="M127.961 312.187l-1.575 1.92v98.199l1.575 4.601 128.038-180.32z"/><path fill="#C0CBF7" d="M127.962 416.905v-104.72L0 236.585z"/><path fill="#8A9EF5" d="M127.961 287.958l127.96-75.637-127.96-58.162z"/><path fill="#A5B4FC" d="M0 212.32l127.96 75.638v-133.8z"/></g>`,
+        LTC: `<circle cx="32" cy="32" r="32" fill="#345D9D"/><path fill="#FFF" d="M31 43l2.2-8.4 4.8-1.7 1.4-5.3-4.8 1.7 4.7-17.7h-7.6l-7.4 27.9-3.4 1.2-1.4 5.3 3.4-1.2-2.7 10.3h25.1l2.2-8.2H31z"/>`
+    };
+
+    const UI_SVGS={theme:'<path d="M44 8a20 20 0 1 0 12 36A22 22 0 0 1 44 8z"/>',click:'<circle cx="32" cy="32" r="20"/><path d="M32 8v10M32 46v10M8 32h10M46 32h10"/>',auto:'<rect x="10" y="14" width="44" height="36" rx="7"/><path d="M18 38h8l5-12 6 17 4-9h5"/>',upgrade:'<path d="M14 48l6-6 10 10 20-20M39 32l11-11 5 5-11 11M10 54h44"/>',exchange:'<path d="M10 22h38l-7-7M54 42H16l7 7"/>',luxury:'<path d="M8 38h48l-8 12H16z"/><circle cx="20" cy="50" r="5"/><circle cx="44" cy="50" r="5"/><path d="M18 38l7-12h14l7 12"/>',background:'<rect x="8" y="11" width="48" height="42" rx="6"/><circle cx="22" cy="25" r="4"/><path d="M12 47l13-14 9 9 7-7 11 12"/>',task:'<path d="M18 10h28v44H18z"/><path d="M24 22l4 4 8-9M24 35l4 4 8-9M24 48h14"/>',leader:'<path d="M10 52h44M16 44V28h9v16M28 44V18h9v26M40 44V10h9v34"/>',soundOn:'<path d="M10 26h9l12-10v28L19 34h-9z"/><path d="M39 24c5 4 5 12 0 16M45 18c9 8 9 20 0 28"/>',soundOff:'<path d="M10 26h9l12-10v28L19 34h-9z"/><path d="M41 24l12 16M53 24L41 40"/>'};
+    function svgIcon(name){return `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${UI_SVGS[name]||UI_SVGS.background}</svg>`;}
+    function hydrateUiIcons(root=document){root.querySelectorAll('.ui-icon[data-icon]').forEach(el=>el.innerHTML=svgIcon(el.dataset.icon));}
+
+    function generateUpgrades(type, prefix, initialCost, initialAdd, costFactor, addFactor) {
+        const result = [];
+        const namesClick = [
+            'Оптимизация клика', 'Мех. клавиатура', 'Макрос клика', 'Игровая мышь Pro', 'Клик-Бот v1.0',
+            'Оптический переключатель', 'Автокликер Turbo', 'Нейросетевой тап', 'Квантовый кликер', 'AI-Ассистент',
+            'Турбо-Скрипт v2', 'Суперкомпьютер мышь', 'Спутниковый клик', 'ПЛИС-Ускоритель', 'Чип M1 Max',
+            'Фотонный сенсор', 'Нейроинтерфейс', 'Кибер-палец', 'Подпространственный тап', 'Нано-кликеры',
+            'Матричный манипулятор', 'Сингулярный клик', 'Гравитационный тап', 'Временной ускоритель', 'Абсолютный Клик'
+        ];
+        const namesAuto = [
+            'Python Скрипт', 'Видеокарта GTX 1660', 'Видеокарта RTX 3080', 'Видеокарта RTX 4090', 'ASIC Miner S9',
+            'ASIC Miner S19', 'ASIC Hydro S21', 'Майнинг-стойка', 'Контейнер ферм', 'Ангар оборудования',
+            'Ферма в Сибири', 'Дата-центр ГЭС', 'Атомный майнер', 'Подземный бункер', 'Геотермальная станция',
+            'Орбитальная ферма', 'Лунный дата-центр', 'Марсианский комплекс', 'Термоядерная ферма', 'Сфера Дайсона',
+            'Квантовый дата-центр', 'Чернодырный майнер', 'Галактическая сеть', 'Мультивселенный ASIC', 'Матрица Майнинга'
+        ];
+
+        const names = type === 'click' ? namesClick : namesAuto;
+        let curCost = initialCost;
+        let curAdd = initialAdd;
+
+        for (let i = 0; i < 25; i++) {
+            result.push({
+                id: `${prefix}_${type}_${i+1}`,
+                name: names[i] || `${type === 'click' ? 'Клик' : 'Майнер'} Lvl ${i+1}`,
+                baseCost: Math.floor(curCost),
+                add: Math.floor(curAdd),
+                count: 0
+            });
+            curCost *= costFactor;
+            curAdd *= addFactor;
+        }
+        return result;
+    }
+
+    function getRandomWaitTime() {
+        // Длительность ожидания: от 3 до 8 минут (180 - 480 секунд)
+        return Math.floor(Math.random() * (480 - 180 + 1)) + 180;
+    }
+
+    let state = {
+        usd: 0,
+        currentCoin: "BTC",
+        theme: "dark",
+        bgStyle: "default",
+        stats: { 
+            totalClicks: 0, 
+            tradedUsd: 0,
+            farmedSatoshis: { BTC: 0, ETH: 0, LTC: 0 },
+            accumulatedUsd: 0
+        },
+        activeEvent: null,
+        nextEventIn: getRandomWaitTime(),
+        coins: {
+            BTC: {
+                satoshis: 0, multiplier: 1, rateUsd:65000,baseRateUsd:65000,rateTarget:65000,rateNextUpdate:0,baseRebirthCost: 1.0 * SATOSHI, rebirthCount: 0,
+                clickUpgrades: generateUpgrades('click', 'btc', 10, 1, 1.85, 1.65),
+                autoUpgrades: generateUpgrades('auto', 'btc', 25, 1, 1.9, 1.7)
+            },
+            ETH: {
+                satoshis: 0, multiplier: 1, rateUsd:3500,baseRateUsd:3500,rateTarget:3500,rateNextUpdate:0,baseRebirthCost: 10.0 * SATOSHI, rebirthCount: 0,
+                clickUpgrades: generateUpgrades('click', 'eth', 15, 5, 1.8, 1.6),
+                autoUpgrades: generateUpgrades('auto', 'eth', 30, 2, 1.85, 1.65)
+            },
+            LTC: {
+                satoshis: 0, multiplier: 1, rateUsd:85,baseRateUsd:85,rateTarget:85,rateNextUpdate:0,baseRebirthCost: 100.0 * SATOSHI, rebirthCount: 0,
+                clickUpgrades: generateUpgrades('click', 'ltc', 20, 20, 1.75, 1.55),
+                autoUpgrades: generateUpgrades('auto', 'ltc', 40, 8, 1.8, 1.6)
+            }
+        },
+        luxury: [
+            { id: 'lux1', name: 'iPhone 16 Pro Max', cost: 1200, bought: false, icon: '📱', perk: '+2% ко всем доходам' },
+            { id: 'lux2', name: 'AirPods Max Gold', cost: 2500, bought: false, icon: '🎧', perk: '+3% к мощи клика' },
+            { id: 'lux3', name: 'Игровой Сетап Ultimate', cost: 5000, bought: false, icon: '🖥️', perk: '+5% к мощи клика' },
+            { id: 'lux4', name: 'Мотоцикл Ducati Panigale', cost: 15000, bought: false, icon: '🏍️', perk: '+5% к авто-майнингу' },
+            { id: 'lux5', name: 'Часы Rolex Daytona', cost: 35000, bought: false, icon: '⌚', perk: '+7% к авто-майнингу' },
+            { id: 'lux6', name: 'Porsche 911 GT3 RS', cost: 75000, bought: false, icon: '🏎️', perk: '+8% ко всем доходам' },
+            { id: 'lux7', name: 'Tesla Model S Plaid', cost: 120000, bought: false, icon: '⚡', perk: '+10% к авто-майнингу' },
+            { id: 'lux8', name: 'Ferrari SF90 Stradale', cost: 250000, bought: false, icon: '🏎️', perk: '+12% к клику' },
+            { id: 'lux9', name: 'Bugatti Chiron Pur Sport', cost: 500000, bought: false, icon: '🏎️', perk: '+15% к клику' },
+            { id: 'lux10', name: 'Вертолет Sikorsky', cost: 850000, bought: false, icon: '🚁', perk: '+15% к авто-майнингу' },
+            { id: 'lux11', name: 'Пляжная Вилла в Майами', cost: 1500000, bought: false, icon: '🏖️', perk: '+15% ко всему' },
+            { id: 'lux12', name: 'Замок во Франции', cost: 3500000, bought: false, icon: '🏰', perk: '+18% ко всем доходам' },
+            { id: 'lux13', name: 'Джет Gulfstream G650', cost: 8000000, bought: false, icon: '✈️', perk: '+20% к авто-майнингу' },
+            { id: 'lux14', name: 'Суперъяхта 80m', cost: 15000000, bought: false, icon: '🛥️', perk: '+20% к выгоде обмена' },
+            { id: 'lux15', name: 'Небоскреб в Нью-Йорке', cost: 35000000, bought: false, icon: '🏢', perk: '+25% ко всем доходам' },
+            { id: 'lux16', name: 'Частный Остров Карибы', cost: 100000000, bought: false, icon: '🏝️', perk: '+30% ко всему' },
+            { id: 'lux17', name: 'Корабль Falcon Heavy', cost: 250000000, bought: false, icon: '🚀', perk: '+35% к клику' },
+            { id: 'lux18', name: 'Лунная База Alpha', cost: 500000000, bought: false, icon: '🪐', perk: '+50% ко всем доходам' },
+            { id: 'lux19', name: 'Орбитальная Станция', cost: 1200000000, bought: false, icon: '🛰️', perk: '+60% к авто-майнингу' },
+            { id: 'lux20', name: 'Геотермальный Вулкан', cost: 3000000000, bought: false, icon: '🌋', perk: '+70% ко всем доходам' },
+            { id: 'lux21', name: 'Марсианская Колония', cost: 8000000000, bought: false, icon: '🔴', perk: '+80% ко всему' },
+            { id: 'lux22', name: 'Спутники Starlink Pro', cost: 20000000000, bought: false, icon: '🛰️', perk: '+100% к клику' },
+            { id: 'lux23', name: 'Инопланетный Артефакт', cost: 50000000000, bought: false, icon: '🛸', perk: '+120% к авто-майнингу' },
+            { id: 'lux24', name: 'Звездный Крейсер', cost: 150000000000, bought: false, icon: '⭐', perk: '+150% ко всем доходам' },
+            { id: 'lux25', name: 'Квантовый Портал', cost: 400000000000, bought: false, icon: '🌀', perk: '+200% к клику' },
+            { id: 'lux26', name: 'Сфера Дайсона', cost: 1000000000000, bought: false, icon: '☀️', perk: '+250% ко всем доходам' },
+            { id: 'lux27', name: 'Галактическая Империя', cost: 3000000000000, bought: false, icon: '🌌', perk: '+300% ко всем доходам' },
+            { id: 'lux28', name: 'Машина Времени', cost: 10000000000000, bought: false, icon: '⌛', perk: '+400% ко всем доходам' },
+            { id: 'lux29', name: 'Матрица Судьбы', cost: 30000000000000, bought: false, icon: '🔮', perk: '+500% ко всем доходам' },
+            { id: 'lux30', name: 'Мультивселенный Реактор', cost: 100000000000000, bought: false, icon: '🌌', perk: '+700% ко всем доходам' },
+            { id: 'lux31', name: 'Созвездие Абсолюта', cost: 500000000000000, bought: false, icon: '🪐', perk: '+1000% ко всем доходам' },
+            { id: 'lux32', name: 'Владыка Крипто-Вселенной', cost: 2000000000000000, bought: false, icon: '👑', perk: '+2000% ко всем доходам' }
+        ],
+        taskState: { clicksTier: 0, btcTier: 0, ethTier: 0, ltcTier: 0, usdTier: 0, tradeTier: 0, luxuryTier: 0 }
+    };
+
+    const bgConfigs = [
+        { id: 'default', name: 'Стандартный', desc: 'Классическая темная/светлая тема', reqLuxId: null },
+        { id: 'neon', name: 'Неоновый Сити', desc: 'Бесплатный неоновый градиент', reqLuxId: null },
+        { id: 'emerald', name: 'Изумрудная Бездна', desc: 'Бесплатный зеленый градиент', reqLuxId: null },
+        { id: 'beach', name: 'Пляжная Вилла', desc: 'За покупку Виллы в Майами', reqLuxId: 'lux11', reqName: 'Пляжная Вилла в Майами' },
+        { id: 'space', name: 'Космическая Одиссея', desc: 'За покупку Частного Острова', reqLuxId: 'lux16', reqName: 'Частный Остров Карибы' },
+        { id: 'mars', name: 'Марсианская Колония', desc: 'За покупку Марсианской Колонии', reqLuxId: 'lux21', reqName: 'Марсианская Колония' }
+    ];
+
+    const taskConfigs = {
+        clicks: Array.from({length: 12}, (_, i) => ({
+            target: Math.floor(50 * Math.pow(3, i)),
+            reward: Math.floor(200 * Math.pow(2.8, i)),
+            desc: `Сделать ${formatCompact(Math.floor(50 * Math.pow(3, i)))} кликов`
+        })),
+        btc: Array.from({length: 12}, (_, i) => ({
+            target: Math.floor(0.0001 * SATOSHI * Math.pow(4, i)),
+            reward: Math.floor(100 * Math.pow(3.2, i)),
+            desc: `Нафармить ${( (0.0001 * Math.pow(4, i)).toFixed(4) )} BTC`
+        })),
+        eth: Array.from({length: 12}, (_, i) => ({
+            target: Math.floor(0.005 * SATOSHI * Math.pow(4, i)),
+            reward: Math.floor(150 * Math.pow(3.2, i)),
+            desc: `Нафармить ${( (0.005 * Math.pow(4, i)).toFixed(3) )} ETH`
+        })),
+        ltc: Array.from({length: 12}, (_, i) => ({
+            target: Math.floor(0.1 * SATOSHI * Math.pow(4, i)),
+            reward: Math.floor(120 * Math.pow(3.2, i)),
+            desc: `Нафармить ${( (0.1 * Math.pow(4, i)).toFixed(2) )} LTC`
+        })),
+        usd: Array.from({length: 12}, (_, i) => ({
+            target: Math.floor(500 * Math.pow(4, i)),
+            reward: Math.floor(250 * Math.pow(3.5, i)),
+            desc: `Накопить $${formatCompact(Math.floor(500 * Math.pow(4, i)))} USD`
+        })),
+        trade: Array.from({length: 12}, (_, i) => ({
+            target: Math.floor(1000 * Math.pow(4, i)),
+            reward: Math.floor(400 * Math.pow(3.3, i)),
+            desc: `Обменять валюты на $${formatCompact(Math.floor(1000 * Math.pow(4, i)))}`
+        })),
+        luxury: Array.from({length: 12}, (_, i) => ({
+            target: Math.min(32, i + 1),
+            reward: Math.floor(200 * Math.pow(1.65, i)),
+            desc: `Купить ${Math.min(32, i + 1)} предметов роскоши`
+        }))
+    };
+
+    const mockLeaders = {
+        BTC: [{ name: "Satoshi_N", amountVal: 1050.0, amount: "1050.00 BTC" }, { name: "Whale_Trader", amountVal: 420.5, amount: "420.50 BTC" }, { name: "CryptoKing", amountVal: 15.8, amount: "15.80 BTC" }],
+        ETH: [{ name: "Vitalik_B", amountVal: 8500.0, amount: "8500.00 ETH" }, { name: "Gwei_Master", amountVal: 1200.0, amount: "1200.00 ETH" }, { name: "Node_Runner", amountVal: 180.2, amount: "180.20 ETH" }],
+        LTC: [{ name: "Charlie_L", amountVal: 45000.0, amount: "45000.00 LTC" }, { name: "Scrypt_God", amountVal: 9800.0, amount: "9800.00 LTC" }, { name: "Lite_Miner", amountVal: 910.0, amount: "910.00 LTC" }]
+    };
+
+    let currentLeaderTab = "BTC";
+
+    function showToast(msg, icon = '🔔') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<span style="font-size: 20px;">${icon}</span><div>${msg}</div>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'toastOut 0.3s forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3200);
+    }
+
+    function formatCrypto(sat) { const v=sat/SATOSHI; return Math.abs(v)>=1e6 ? formatCompact(v) : v.toFixed(8); }
+    function formatUSD(num) { const v=Number(num)||0; return '$' + (Math.abs(v)>=1e6 ? formatCompact(v) : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })); }
+    function formatCompact(num) {
+        const n = Math.abs(Number(num) || 0);
+        const sign = Number(num) < 0 ? '-' : '';
+        const trim = v => Number(v.toFixed(2)).toString();
+        if (n >= 1e12) return sign + trim(n / 1e12) + ' Т';
+        if (n >= 1e9) return sign + trim(n / 1e9) + ' В';
+        if (n >= 1e6) return sign + trim(n / 1e6) + ' М';
+        if (n >= 1e3) return sign + trim(n / 1e3) + ' тыс.';
+        return sign + trim(n);
+    }
+
+    function getUpgradeCost(upgrade) {
+        const key=String(upgrade.id).toLowerCase();
+        const baseFactor=key.startsWith('eth_')?1.38:key.startsWith('ltc_')?1.42:1.30;
+        const n=upgrade.count||0;
+        // Первые уровни остаются доступными, после 6-й покупки цена плавно ускоряется.
+        const lateCurve=n>6 ? Math.pow(1.075,n-6) : 1;
+        return Math.max(1,Math.floor(upgrade.baseCost*Math.pow(baseFactor,n)*lateCurve));
+    }
+    function getUpgradeAdd(upgrade){ return Math.max(1,Math.floor(upgrade.add*Math.pow(1.13,upgrade.count||0))); }
+
+    function getRebirthCost(coinKey) {
+        const coin = state.coins[coinKey];
+        return Math.floor(coin.baseRebirthCost * Math.pow(2, coin.rebirthCount));
+    }
+
+    // Кэшируем множители и мощности: игровой цикл больше не проходит 32 luxury-предмета и 150 upgrade-объектов каждый кадр.
+    const powerCache = { click: {BTC:1, ETH:5, LTC:20}, auto: {BTC:0, ETH:0, LTC:0}, exchangeBonus:1 };
+    let cacheDirty = true;
+
+    function getMultipliers() {
+        let clickMult = 1, autoMult = 1, exchangeBonus = 1;
+        for (const item of state.luxury) {
+            if (!item.bought) continue;
+            switch(item.id) {
+                case 'lux1': clickMult += .02; autoMult += .02; break;
+                case 'lux2': case 'lux3': clickMult += .05; break;
+                case 'lux4': case 'lux5': autoMult += .07; break;
+                case 'lux6': clickMult += .08; autoMult += .08; break;
+                case 'lux7': autoMult += .10; break;
+                case 'lux8': case 'lux9': clickMult += .15; break;
+                case 'lux10': autoMult += .15; break;
+                case 'lux11': clickMult += .15; autoMult += .15; break;
+                case 'lux12': clickMult += .18; autoMult += .18; break;
+                case 'lux13': autoMult += .20; break;
+                case 'lux14': exchangeBonus += .20; break;
+                case 'lux15': clickMult += .25; autoMult += .25; break;
+                case 'lux16': clickMult += .30; autoMult += .30; break;
+                case 'lux17': clickMult += .35; break;
+                case 'lux18': clickMult += .50; autoMult += .50; break;
+                case 'lux19': autoMult += .60; break;
+                case 'lux20': clickMult += .70; autoMult += .70; break;
+                case 'lux21': clickMult += .80; autoMult += .80; break;
+                case 'lux22': clickMult += 1; break;
+                case 'lux23': autoMult += 1.2; break;
+                case 'lux24': clickMult += 1.5; autoMult += 1.5; break;
+                case 'lux25': clickMult += 2; break;
+                case 'lux26': clickMult += 2.5; autoMult += 2.5; break;
+                case 'lux27': clickMult += 3; autoMult += 3; break;
+                case 'lux28': clickMult += 4; autoMult += 4; break;
+                case 'lux29': clickMult += 5; autoMult += 5; break;
+                case 'lux30': clickMult += 7; autoMult += 7; break;
+                case 'lux31': clickMult += 10; autoMult += 10; break;
+                case 'lux32': clickMult += 20; autoMult += 20; break;
+            }
+        }
+        if (state.activeEvent) {
+            if (state.activeEvent.id === 'bullrun') { clickMult *= 2; autoMult *= 2; }
+            else if (state.activeEvent.id === 'altseason' && (state.currentCoin === 'ETH' || state.currentCoin === 'LTC')) { clickMult *= 2.5; autoMult *= 2.5; }
+            else if (state.activeEvent.id === 'clickboost') clickMult *= 2;
+        }
+        return { clickMult, autoMult, exchangeBonus };
+    }
+
+    function recalcPowerCache() {
+        const m = getMultipliers();
+        for (const key of ['BTC','ETH','LTC']) {
+            const coin = state.coins[key];
+            let clickBase = key === 'BTC' ? 1 : key === 'ETH' ? 5 : 20;
+            for (const u of coin.clickUpgrades) { for(let n=0;n<u.count;n++) clickBase += Math.max(1,Math.floor(u.add*Math.pow(1.13,n))); }
+            let autoBase = 0;
+            for (const u of coin.autoUpgrades) { for(let n=0;n<u.count;n++) autoBase += Math.max(1,Math.floor(u.add*Math.pow(1.13,n))); }
+            powerCache.click[key] = Math.max(1, Math.floor(clickBase * coin.multiplier * m.clickMult));
+            powerCache.auto[key] = Math.floor(autoBase * coin.multiplier * m.autoMult);
+        }
+        powerCache.exchangeBonus = m.exchangeBonus;
+        cacheDirty = false;
+    }
+
+    function getClickPower(coinKey) { if (cacheDirty) recalcPowerCache(); return powerCache.click[coinKey]; }
+    function getAutoPower(coinKey) { if (cacheDirty) recalcPowerCache(); return powerCache.auto[coinKey]; }
+
+    // DOM Элементы
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const clickRateDisplay = document.getElementById('clickRateDisplay');
+    const incomeRateDisplay = document.getElementById('incomeRateDisplay');
+    const usdDisplay = document.getElementById('usdDisplay');
+    const coinBtn = document.getElementById('coinBtn');
+    const coinIcon = document.getElementById('coinIcon');
+    const coinTitle = document.getElementById('coinTitle');
+    const clickUpgradesContainer = document.getElementById('clickUpgradesContainer');
+    const autoUpgradesContainer = document.getElementById('autoUpgradesContainer');
+    const luxuryContainer = document.getElementById('luxuryContainer');
+    const tasksContainer = document.getElementById('tasksContainer');
+    const leaderboardContainer = document.getElementById('leaderboardContainer');
+    const backgroundsContainer = document.getElementById('backgroundsContainer');
+    const themeToggle = document.getElementById('themeToggle');
+    const rebirthBtn = document.getElementById('rebirthBtn');
+    const rebirthDesc = document.getElementById('rebirthDesc');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+
+    // ---------------- Локальная версия для VK Игры ----------------
+    // Игра работает без сторонних SDK и внешних сервисов.
+    // Прогресс хранится локально в браузере пользователя.
+    const storageKey = 'crypto_empire_vk_v1';
+    let gamePaused = false;
+
+    // Игра полностью на русском. Английская локализация для  не требуется.
+    const I18N = {ru:{
+        theme:'Тема', click:'клик', auto:'авто',
+        upgrades:'Улучшения', exchange:'Обменник', luxury:'Роскошь', backgrounds:'Фоны', tasks:'Задания', leaders:'Лидеры',
+        manual:'Ручной Клик', mining:'Авто-Майнинг', sell:'Продать криптовалюту за $USD', buyTitle:'Купить криптовалюту за $USD',
+        sellBtn:'Продать в $USD', buyBtn:'Купить Крипту', amount:'Количество', usdAmount:'Сумма в $USD', all:'Всё (100%)',
+        halving:'Халвинг (Перерождение)', halvingDesc:'Сброс {coin} ради множителя <b>x{mult}</b>.', halvingBtn:'Сделать Халвинг',
+        backgroundTitle:'Кастомизация фонов', events:'СОБЫТИЯ РЫНКА', waiting:'Ожидание', stable:'Стабильный рынок', active:'АКТИВНО',
+        next:'След. событие через:', end:'До конца события:', buy:'Купить', bought:'Куплено', choose:'Выбрать', activeBg:'Активен', locked:'Закрыто', required:'Требуется:',
+        reward:'Награда:', claim:'Забрать', completed:'Завершено', allDone:'Все уровни выполнены!', done:'Готово', level:'Уровень', player:'Вы (Игрок)', you:'ВЫ',
+        balance:'Баланс', perClick:'/клик', perSecond:'/с', rate:'Курс:', fee:'Комиссия 5%',
+        taskDone:'Задание выполнено!', bgChanged:'Фон успешно изменен!', halvingDone:'Халвинг выполнен!', notEnough:'Недостаточно', invalid:'Введите корректное количество!',
+        sold:'Продано! Получено', purchased:'Куплено'
+    }};
+    function t(key,vars={}){let str=I18N.ru[key]??key;for(const k in vars)str=str.replaceAll(`{${k}}`,vars[k]);return str;}
+    function applyLanguage(){
+        document.documentElement.lang='ru';
+        const tabs={upgrades:'upgrades',exchange:'exchange',luxury:'luxury',backgrounds:'backgrounds',tasks:'tasks',leaders:'leaders'};
+        document.querySelectorAll('.menu-tab[data-tab]').forEach(el=>{const icon=el.querySelector('.ui-icon');el.innerHTML='';if(icon)el.appendChild(icon);el.appendChild(document.createTextNode(t(tabs[el.dataset.tab])));});
+        const cols=document.querySelectorAll('.column-title');
+        if(cols[0])cols[0].innerHTML='<span class="ui-icon" data-icon="click"></span>Ручной Клик';
+        if(cols[1])cols[1].innerHTML='<span class="ui-icon" data-icon="auto"></span>Авто-Майнинг';
+        const h4=document.querySelectorAll('#tab-exchange h4');if(h4[0])h4[0].innerText=t('sell');if(h4[1])h4[1].innerText=t('buyTitle');
+        const exP=document.querySelectorAll('#tab-exchange p');if(exP[0])exP[0].innerHTML=`${t('rate')} <span id="currentRateText"></span> (${t('fee')})`;if(exP[1])exP[1].innerText='Купите крипту для выполнения заданий или накоплений';
+        document.getElementById('cryptoToSellInput').placeholder=t('amount');document.getElementById('usdToBuyInput').placeholder=t('usdAmount');
+        document.getElementById('sellCryptoBtn').innerText=t('sellBtn');document.getElementById('buyCryptoBtn').innerText=t('buyBtn');
+        document.querySelectorAll('#tab-exchange .quick-btn').forEach((b,i)=>{if(i%4===3)b.innerText=t('all');});
+        const rt=document.getElementById('themeToggle')?.querySelector('span:last-child');if(rt)rt.innerText='Тема';
+        const rb=document.querySelector('.rebirth-box h4');if(rb)rb.innerText=t('halving');
+        const bt=document.querySelector('#tab-backgrounds .column-title');if(bt)bt.innerHTML='<span class="ui-icon" data-icon="background"></span>'+t('backgroundTitle');
+        hydrateUiIcons();
+    }
+    function serializeGame(){
+        return {
+            usd:state.usd,currentCoin:state.currentCoin,theme:state.theme,bgStyle:state.bgStyle,
+            stats:state.stats,activeEvent:state.activeEvent,nextEventIn:state.nextEventIn,
+            coins:state.coins,luxury:state.luxury,taskState:state.taskState
+        };
+    }
+    function restoreGame(data){
+        if(!data || !data.coins) return false;
+        Object.assign(state,data);
+        for(const k of ['BTC','ETH','LTC']) {
+            if(!state.coins[k]) continue;
+            state.coins[k].clickUpgrades ||= generateUpgrades('click',k.toLowerCase(),10,1,1.85,1.65);
+            state.coins[k].autoUpgrades ||= generateUpgrades('auto',k.toLowerCase(),25,1,1.9,1.7);
+        }
+        state.lang='ru'; cacheDirty=true;
+        document.documentElement.setAttribute('data-theme',state.theme||'dark');
+        document.body.setAttribute('data-bg',state.bgStyle||'default');
+        document.body.setAttribute('data-coin',state.currentCoin||'BTC');
+        return true;
+    }
+    function saveLocal(){
+        try{ localStorage.setItem(storageKey,JSON.stringify(serializeGame())); }catch(e){}
+    }
+
+    function saveGame(force=false){ saveLocal(); }
+
+    try{ const local=localStorage.getItem(storageKey); if(local) restoreGame(JSON.parse(local)); }catch(e){}
+    applyLanguage();
+
+    function pauseGame(){
+        gamePaused=true;
+        saveGame(false);
+        try{ if(AudioEngine.ctx) AudioEngine.ctx.suspend(); }catch(e){}
+    }
+    function resumeGame(){
+        lastTickTime=performance.now();
+        gamePaused=false;
+        try{ if(AudioEngine.ctx && !AudioEngine.muted) AudioEngine.ctx.resume(); }catch(e){}
+    }
+
+    // Кнопка звуков
+    soundToggleBtn.addEventListener('click', () => {
+        AudioEngine.init();
+        AudioEngine.muted = !AudioEngine.muted;
+        soundToggleBtn.innerHTML=`<span class="ui-icon">${AudioEngine.muted?svgIcon('soundOff'):svgIcon('soundOn')}</span>`;
+        showToast(AudioEngine.muted ? "Звук выключен" : "Звук включен", "");
+    });
+
+    // Клик по монете
+    coinBtn.addEventListener('click', (e) => {
+        AudioEngine.init();
+        AudioEngine.playClick();
+        if(gamePaused) return;
+        const clickPower = getClickPower(state.currentCoin);
+        state.coins[state.currentCoin].satoshis += clickPower;
+        state.stats.totalClicks++;
+        state.stats.farmedSatoshis[state.currentCoin] += clickPower;
+
+        const rect = coinBtn.getBoundingClientRect();
+        const text = document.createElement('div');
+        text.className = 'floating-text';
+        text.innerText = `+${formatCrypto(clickPower)} ${state.currentCoin}`;
+        text.style.left = `${e.clientX - rect.left + (Math.random() * 20 - 10)}px`;
+        text.style.top = `${e.clientY - rect.top - 10}px`;
+        coinBtn.appendChild(text);
+
+        setTimeout(() => text.remove(), 800);
+        updateUIFast(); saveLocal();
+    });
+
+    // Переключение монет
+    document.querySelectorAll('.coin-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            AudioEngine.init();
+            AudioEngine.playBtn();
+            switchCoin(tab.dataset.coin);
+        });
+    });
+
+    function switchCoin(coin) {
+        state.currentCoin = coin;
+        document.body.setAttribute('data-coin', coin);
+        document.querySelectorAll('.coin-tab').forEach(t => t.classList.toggle('active', t.dataset.coin === coin));
+        
+        currentLeaderTab = coin;
+        document.getElementById('leaderBtcBtn').classList.toggle('active', coin === 'BTC');
+        document.getElementById('leaderEthBtn').classList.toggle('active', coin === 'ETH');
+        document.getElementById('leaderLtcBtn').classList.toggle('active', coin === 'LTC');
+
+        updateFullUI(); saveGame(true);
+    }
+
+    // Переключение вкладок
+    document.querySelectorAll('.menu-tab[data-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            AudioEngine.init();
+            AudioEngine.playBtn();
+            document.querySelectorAll('.menu-tab[data-tab]').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            
+            if (tab.dataset.tab === 'tasks') renderTasks();
+        });
+    });
+
+    // Халвинг
+    rebirthBtn.addEventListener('click', () => {
+        AudioEngine.init();
+        const coin = state.coins[state.currentCoin];
+        const cost = getRebirthCost(state.currentCoin);
+
+        if (coin.satoshis >= cost) {
+            AudioEngine.playTask();
+            coin.satoshis -= cost;
+            coin.multiplier *= 2;
+            coin.rebirthCount++;
+            coin.clickUpgrades.forEach(u => u.count = 0);
+            coin.autoUpgrades.forEach(u => u.count = 0);
+            cacheDirty=true; showToast(`${t('halvingDone')} x${coin.multiplier}`, "🚀");
+            updateFullUI(); saveGame(true);
+        } else {
+            AudioEngine.playBtn();
+            showToast(`Недостаточно ${state.currentCoin} для халвинга!`, "❌");
+        }
+    });
+
+    // Обмен
+    function setSellPercent(pct) {
+        AudioEngine.init(); AudioEngine.playBtn();
+        const coin = state.coins[state.currentCoin];
+        const val = (coin.satoshis / SATOSHI) * pct;
+        document.getElementById('cryptoToSellInput').value=val.toFixed(8);updateExchangePreview();
+    }
+
+    function setBuyPercent(pct) {
+        AudioEngine.init(); AudioEngine.playBtn();
+        const val = state.usd * pct;
+        document.getElementById('usdToBuyInput').value=val.toFixed(2);updateExchangePreview();
+    }
+
+    function updateExchangePreview(){
+        const coin=state.coins[state.currentCoin], bonus=getMultipliers().exchangeBonus;
+        const sell=parseFloat(document.getElementById('cryptoToSellInput')?.value)||0, buyUsd=parseFloat(document.getElementById('usdToBuyInput')?.value)||0;
+        const sp=document.getElementById('sellPreview'),bp=document.getElementById('buyPreview');
+        if(sp)sp.innerText=formatUSD(sell*coin.rateUsd*0.95*bonus);
+        if(bp)bp.innerText=`${(coin.rateUsd?buyUsd/coin.rateUsd:0).toFixed(8)} ${state.currentCoin}`;
+        const rt=document.getElementById('currentRateText');if(rt)rt.innerText=`1 ${state.currentCoin} = ${formatUSD(coin.rateUsd)}`;
+    }
+    document.getElementById('cryptoToSellInput').addEventListener('input',updateExchangePreview);
+    document.getElementById('usdToBuyInput').addEventListener('input',updateExchangePreview);
+
+    document.getElementById('sellCryptoBtn').addEventListener('click', () => {
+        AudioEngine.init();
+        const inputVal = parseFloat(document.getElementById('cryptoToSellInput').value);
+        const coin = state.coins[state.currentCoin];
+        if (!inputVal || inputVal <= 0) {
+            AudioEngine.playBtn();
+            showToast("Введите корректное количество!", "⚠️");
+            return;
+        }
+
+        const satToSell = Math.min(Math.floor(inputVal * SATOSHI), Math.floor(coin.satoshis));
+        if (satToSell > 0 && coin.satoshis >= satToSell) {
+            AudioEngine.playExchange();
+            coin.satoshis -= satToSell;
+            const grossUsd = (satToSell / SATOSHI) * coin.rateUsd;
+            const netUsd = grossUsd * 0.95 * getMultipliers().exchangeBonus;
+            state.usd += netUsd;
+            state.stats.tradedUsd += netUsd;
+            state.stats.accumulatedUsd += netUsd;
+            document.getElementById('cryptoToSellInput').value='';updateExchangePreview();
+            showToast(`${t('sold')} ${formatUSD(netUsd)}`, "✅");
+            updateFullUI(); saveGame(true);
+        } else {
+            AudioEngine.playBtn();
+            showToast("Недостаточно криптовалюты!", "❌");
+        }
+    });
+
+    document.getElementById('buyCryptoBtn').addEventListener('click', () => {
+        AudioEngine.init();
+        const usdInput = parseFloat(document.getElementById('usdToBuyInput').value);
+        const coin = state.coins[state.currentCoin];
+        if (!usdInput || usdInput <= 0) {
+            AudioEngine.playBtn();
+            showToast("Введите сумму в $USD!", "⚠️");
+            return;
+        }
+
+        const actualSpend = Math.min(usdInput, state.usd);
+
+        if (state.usd >= actualSpend && actualSpend > 0) {
+            AudioEngine.playExchange();
+            state.usd -= actualSpend;
+            const satBought = Math.floor((actualSpend / coin.rateUsd) * SATOSHI);
+            coin.satoshis += satBought;
+            document.getElementById('usdToBuyInput').value='';updateExchangePreview();
+            showToast(`${t('purchased')} ${formatCrypto(satBought)} ${state.currentCoin}!`, "✅");
+            updateFullUI(); saveGame(true);
+        } else {
+            AudioEngine.playBtn();
+            showToast("Недостаточно $USD!", "❌");
+        }
+    });
+
+    // Темы и Фоны
+    themeToggle.addEventListener('click', () => {
+        AudioEngine.init(); AudioEngine.playBtn();
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', state.theme);
+        themeToggle.innerHTML = `<span class="ui-icon">${svgIcon('theme')}</span><span>Тема</span>`;
+        cacheDirty=true;
+        saveGame(true);
+    });
+
+    function setBgTheme(style) {
+        AudioEngine.init(); AudioEngine.playBtn();
+        state.bgStyle = style;
+        document.body.setAttribute('data-bg', style);
+        showToast(t('bgChanged'), "🎨");
+        renderBackgrounds(); saveGame(true);
+    }
+
+    // Рендер улучшений
+    function renderUpgrades() {
+        const coin = state.coins[state.currentCoin];
+
+        clickUpgradesContainer.innerHTML = coin.clickUpgrades.map(u => {
+            const cost = getUpgradeCost(u);
+            const canBuy = coin.satoshis >= cost;
+            return `
+                <div class="item-card">
+                    <div>
+                        <div style="font-weight: 800; font-size: 13px;">${u.name} <span style="color: var(--theme-color);">[${u.count}]</span></div>
+                        <div style="font-size: 11px; color: var(--subtext);">+${formatCrypto(getUpgradeAdd(u) * coin.multiplier)} ${state.currentCoin}/клик</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--theme-color); margin-top:2px;">${formatCrypto(cost)} ${state.currentCoin}</div>
+                    </div>
+                    <button class="buy-btn" data-upgrade-type="click" data-upgrade-id="${u.id}" ${canBuy ? '' : 'disabled'} onclick="buyUpgrade('click', '${u.id}')">${t('buy')}</button>
+                </div>
+            `;
+        }).join('');
+
+        autoUpgradesContainer.innerHTML = coin.autoUpgrades.map(u => {
+            const cost = getUpgradeCost(u);
+            const canBuy = coin.satoshis >= cost;
+            return `
+                <div class="item-card">
+                    <div>
+                        <div style="font-weight: 800; font-size: 13px;">${u.name} <span style="color: #22c55e;">[${u.count}]</span></div>
+                        <div style="font-size: 11px; color: var(--subtext);">+${formatCrypto(getUpgradeAdd(u) * coin.multiplier)} ${state.currentCoin}/с</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--theme-color); margin-top:2px;">${formatCrypto(cost)} ${state.currentCoin}</div>
+                    </div>
+                    <button class="buy-btn" data-upgrade-type="auto" data-upgrade-id="${u.id}" ${canBuy ? '' : 'disabled'} onclick="buyUpgrade('auto', '${u.id}')">${t('buy')}</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function buyUpgrade(type, id) {
+        AudioEngine.init();
+        const coin = state.coins[state.currentCoin];
+        const list = type === 'click' ? coin.clickUpgrades : coin.autoUpgrades;
+        const u = list.find(item => item.id === id);
+        if (!u) return;
+
+        const cost = getUpgradeCost(u);
+        if (coin.satoshis >= cost) {
+            AudioEngine.playBtn();
+            coin.satoshis -= cost;
+            u.count++; cacheDirty=true; updateFullUI(); saveGame(true);
+        }
+    }
+
+    // Рендер роскоши (Сетчатое выравнивание как по линейке)
+    function luxurySvg(id) {
+        const paths = {
+            lux1:'<rect x="12" y="5" width="40" height="54" rx="8"/><circle cx="32" cy="50" r="2"/>',
+            lux2:'<path d="M17 28v-7a15 15 0 0 1 30 0v7"/><path d="M12 27h8v12h-5a3 3 0 0 1-3-3zM52 27h-8v12h5a3 3 0 0 0 3-3z"/>',
+            lux3:'<rect x="7" y="10" width="50" height="34" rx="4"/><path d="M25 52h14M20 45h24"/>',
+            lux4:'<circle cx="17" cy="47" r="8"/><circle cx="47" cy="47" r="8"/><path d="M17 39l10-16h12l8 16M27 23l-5-8h8l7 8M39 23l8-5"/>',
+            lux5:'<rect x="17" y="15" width="30" height="34" rx="8"/><path d="M24 8v9M40 8v9M24 49v7M40 49v7"/><circle cx="32" cy="32" r="8"/><path d="M32 27v6l4 2"/>',
+            lux6:'<path d="M8 40l5-13h34l9 13v7H8z"/><circle cx="19" cy="47" r="6"/><circle cx="45" cy="47" r="6"/><path d="M19 27l6-9h12l7 9"/>',
+            lux7:'<path d="M8 39h38l8 7H10z"/><circle cx="19" cy="46" r="6"/><circle cx="45" cy="46" r="6"/><path d="M20 39l7-14h14l6 14"/>',
+            lux8:'<path d="M8 40l5-13h35l8 13v7H8z"/><circle cx="19" cy="47" r="6"/><circle cx="45" cy="47" r="6"/><path d="M22 27l5-8h9l8 8"/>',
+            lux9:'<path d="M7 40l7-15h34l9 15v7H7z"/><circle cx="19" cy="47" r="6"/><circle cx="45" cy="47" r="6"/><path d="M20 25l7-8h10l8 8"/>',
+            lux10:'<path d="M16 32l16-12 16 12-16 9z"/><path d="M32 20V8M18 34l-9 9M46 34l9 9M25 37l-5 12M39 37l5 12"/>',
+            lux11:'<path d="M7 49h50M12 49V27h40v22M9 27l23-18 23 18M21 49V35h9v14M38 35h8v7h-8z"/>',
+            lux12:'<path d="M8 52V24l8-7 8 7v-9l8-7 8 7v9l8-7 8 7v28z"/><path d="M27 52V38h10v14"/>',
+            lux13:'<path d="M8 35h48l-16 7H24zM25 42l-5 12M39 42l5 12M29 35l4-18 4 18"/>',
+            lux14:'<path d="M8 38h48l-8 14H16z"/><path d="M30 38V12M30 12l15 10M30 17l-13 8"/>',
+            lux15:'<path d="M17 57V7h30v50M12 57h40M22 15h6M36 15h6M22 25h6M36 25h6M22 35h6M36 35h6M22 45h6M36 45h6"/>',
+            lux16:'<path d="M8 48c9-8 17-9 24-3 7-6 15-5 24 3-12 4-36 4-48 0zM20 44l-5-16M28 43l4-20M40 43l5-17"/>',
+            lux17:'<path d="M32 6v44M25 16h14M20 50h24M22 25h20M17 35h30M13 45h38"/><path d="M32 6l-7 8h14z"/>',
+            lux18:'<circle cx="32" cy="32" r="20"/><circle cx="32" cy="32" r="7"/><path d="M12 32h13M39 32h13M32 12v13M32 39v13"/>',
+            lux19:'<ellipse cx="32" cy="32" rx="23" ry="10"/><ellipse cx="32" cy="32" rx="10" ry="23"/><circle cx="32" cy="32" r="4"/>',
+            lux20:'<path d="M12 52h40L45 31l-7-7 2-13-8 8-8-8 2 13-7 7z"/>',
+            lux21:'<circle cx="32" cy="32" r="22"/><path d="M17 44l12-12 8 6 11-16"/>',
+            lux22:'<circle cx="32" cy="32" r="6"/><path d="M14 20l12 8M50 20L38 28M14 44l12-8M50 44L38 36"/>',
+            lux23:'<path d="M32 6l5 18 19 8-19 8-5 18-5-18-19-8 19-8z"/><circle cx="32" cy="32" r="4"/>',
+            lux24:'<path d="M32 5l6 18 19 3-14 13 4 19-15-10-15 10 4-19L7 26l19-3z"/>',
+            lux25:'<path d="M32 5c12 5 18 12 18 22s-6 17-18 22c-12-5-18-12-18-22S20 10 32 5z"/><path d="M24 24c4-5 12-5 16 0M24 40c4 5 12 5 16 0"/>',
+            lux26:'<circle cx="32" cy="32" r="9"/><circle cx="32" cy="32" r="23"/><path d="M32 9v46M9 32h46"/>',
+            lux27:'<path d="M32 7l7 12 14 3-10 10 2 14-13-6-13 6 2-14-10-10 14-3z"/><circle cx="32" cy="32" r="5"/>',
+            lux28:'<circle cx="32" cy="32" r="22"/><path d="M32 15v18l11 6"/><path d="M20 8l-7 7M44 8l7 7"/>',
+            lux29:'<circle cx="32" cy="32" r="20"/><path d="M23 20l18 24M41 20L23 44M32 12v40"/>',
+            lux30:'<circle cx="32" cy="32" r="21"/><circle cx="32" cy="32" r="8"/><path d="M32 3v13M32 48v13M3 32h13M48 32h13"/>',
+            lux31:'<path d="M32 5l5 15 16 1-12 10 4 16-13-9-13 9 4-16L11 21l16-1z"/><circle cx="32" cy="32" r="3"/>',
+            lux32:'<path d="M17 52V27l15-10 15 10v25M11 52h42M24 52V37h16v15M25 17l7-11 7 11"/>'
+        };
+        const d=paths[id]||paths.lux18;
+        return `<svg viewBox="0 0 64 64" class="lux-svg" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    }
+
+    function renderLuxury() {
+        luxuryContainer.innerHTML = state.luxury.map(item => {
+            const canBuy = state.usd >= item.cost && !item.bought;
+            return `
+                <div class="luxury-card">
+                    <div class="lux-icon-box">${luxurySvg(item.id)}</div>
+                    <div class="lux-info-box">
+                        <div class="lux-title">${item.name}</div>
+                        <div class="lux-perk">${item.perk}</div>
+                        <div class="lux-cost">Цена: ${formatUSD(item.cost)}</div>
+                    </div>
+                    <button class="buy-btn" ${item.bought ? 'disabled' : (canBuy ? '' : 'disabled')} onclick="buyLuxury('${item.id}')">
+                        ${item.bought ? 'Куплено' : 'Купить'}
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function buyLuxury(id) {
+        AudioEngine.init();
+        const item = state.luxury.find(l => l.id === id);
+        if (!item || item.bought) return;
+
+        if (state.usd >= item.cost) {
+            AudioEngine.playTask();
+            state.usd -= item.cost;
+            item.bought = true; cacheDirty=true;
+            showToast(`${t('purchased')}: ${item.name}!`, "🎉");
+            updateFullUI(); saveGame(true);
+        }
+    }
+
+    // Рендер фонов
+    function renderBackgrounds(){
+        backgroundsContainer.innerHTML=bgConfigs.map(bg=>{
+            const lux=bg.reqLuxId?state.luxury.find(l=>l.id===bg.reqLuxId):null;
+            const unlocked=!bg.reqLuxId||!!lux?.bought, active=state.bgStyle===bg.id;
+            return `<div class="item-card background-card"><div class="bg-preview" data-bg="${bg.id}"></div><div style="flex:1;min-width:0;"><div style="font-weight:800;font-size:14px;">${bg.name}</div><div style="font-size:12px;color:var(--subtext);margin-top:3px;">${bg.desc}</div>${!unlocked?`<div style="font-size:11px;color:#ef4444;font-weight:700;margin-top:5px;">Требуется: ${bg.reqName}</div>`:''}</div><button class="buy-btn" ${!unlocked||active?'disabled':''} onclick="setBgTheme('${bg.id}')">${active?'Активен':(unlocked?'Выбрать':'Закрыто')}</button></div>`;
+        }).join('');
+    }
+
+    // Рендер заданий
+    function renderTasks() {
+        const tasks = [
+            { key: 'clicks', name: 'Кликер', current: state.stats.totalClicks, tier: state.taskState.clicksTier },
+            { key: 'btc', name: 'Майнинг BTC', current: state.stats.farmedSatoshis.BTC, tier: state.taskState.btcTier },
+            { key: 'eth', name: 'Майнинг ETH', current: state.stats.farmedSatoshis.ETH, tier: state.taskState.ethTier },
+            { key: 'ltc', name: 'Майнинг LTC', current: state.stats.farmedSatoshis.LTC, tier: state.taskState.ltcTier },
+            { key: 'usd', name: 'Накопления USD', current: state.stats.accumulatedUsd, tier: state.taskState.usdTier },
+            { key: 'trade', name: 'Торговля', current: state.stats.tradedUsd, tier: state.taskState.tradeTier },
+            { key: 'luxury', name: 'Роскошь', current: state.luxury.filter(l => l.bought).length, tier: state.taskState.luxuryTier }
+        ];
+
+        tasksContainer.innerHTML = tasks.map(task => {
+            const configList = taskConfigs[task.key];
+            if (task.tier >= configList.length) {
+                return `
+                    <div class="item-card">
+                        <div>
+                            <div style="font-weight: 800; font-size: 14px;">🎯 ${task.name} (Завершено)</div>
+                            <div style="font-size: 12px; color: #22c55e;">Все уровни выполнены!</div>
+                        </div>
+                        <button class="buy-btn" disabled>${t('done')}</button>
+                    </div>
+                `;
+            }
+
+            const curConfig = configList[task.tier];
+            const isReady = task.current >= curConfig.target;
+            const progressPct = Math.min(100, (task.current / curConfig.target) * 100);
+
+            return `
+                <div class="item-card" id="task-card-${t.key}">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 800; font-size: 13px;">🎯 ${curConfig.desc} [Уровень ${task.tier + 1}/${configList.length}]</div>
+                        <div style="font-size: 11px; color: var(--subtext);">Награда: <b style="color: #22c55e;">${formatUSD(curConfig.reward)}</b></div>
+                        <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 4px; margin-top: 6px; overflow: hidden;">
+                            <div id="task-bar-${t.key}" style="background: var(--theme-color); width: ${progressPct}%; height: 100%; transition: width 0.2s;"></div>
+                        </div>
+                    </div>
+                    <button class="buy-btn" id="task-btn-${t.key}" ${isReady ? '' : 'disabled'} onclick="claimTask('${task.key}')">
+                        ${isReady ? 'Забрать' : `${progressPct.toFixed(0)}%`}
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Живое обновление прогресса заданий без перерисовки всей страницы
+    function updateTasksRealtime() {
+        const tasks = [
+            { key: 'clicks', current: state.stats.totalClicks, tier: state.taskState.clicksTier },
+            { key: 'btc', current: state.stats.farmedSatoshis.BTC, tier: state.taskState.btcTier },
+            { key: 'eth', current: state.stats.farmedSatoshis.ETH, tier: state.taskState.ethTier },
+            { key: 'ltc', current: state.stats.farmedSatoshis.LTC, tier: state.taskState.ltcTier },
+            { key: 'usd', current: state.stats.accumulatedUsd, tier: state.taskState.usdTier },
+            { key: 'trade', current: state.stats.tradedUsd, tier: state.taskState.tradeTier },
+            { key: 'luxury', current: state.luxury.filter(l => l.bought).length, tier: state.taskState.luxuryTier }
+        ];
+
+        tasks.forEach(t => {
+            const configList = taskConfigs[t.key];
+            if (t.tier >= configList.length) return;
+
+            const curConfig = configList[t.tier];
+            const isReady = t.current >= curConfig.target;
+            const progressPct = Math.min(100, (t.current / curConfig.target) * 100);
+
+            const barEl = document.getElementById(`task-bar-${t.key}`);
+            const btnEl = document.getElementById(`task-btn-${t.key}`);
+
+            if (barEl) barEl.style.width = `${progressPct}%`;
+            if (btnEl) {
+                if (isReady) {
+                    btnEl.innerText = t('claim');
+                    btnEl.disabled = false;
+                } else {
+                    btnEl.innerText = `${progressPct.toFixed(0)}%`;
+                    btnEl.disabled = true;
+                }
+            }
+        });
+    }
+
+    function claimTask(key) {
+        AudioEngine.init();
+        const tier = state.taskState[`${key}Tier`];
+        const config = taskConfigs[key][tier];
+        if (!config) return;
+
+        AudioEngine.playTask();
+        state.usd += config.reward;
+        state.stats.accumulatedUsd += config.reward;
+        state.taskState[`${key}Tier`]++;
+        showToast(`${t('taskDone')} +${formatUSD(config.reward)}`, "🏆");
+        renderTasks(); updateFullUI(); saveGame(true);
+    }
+
+    function switchLeaderTab(coin) {
+        AudioEngine.init(); AudioEngine.playBtn();
+        currentLeaderTab=coin;
+        document.getElementById('leaderBtcBtn').classList.toggle('active', coin === 'BTC');
+        document.getElementById('leaderEthBtn').classList.toggle('active', coin === 'ETH');
+        document.getElementById('leaderLtcBtn').classList.toggle('active', coin === 'LTC');
+        renderLeaders();
+    }
+
+    function renderLeaders() {
+        const coin = currentLeaderTab;
+        const playerSatoshis = Number(state.coins?.[coin]?.satoshis || 0);
+        const playerAmountVal = playerSatoshis / SATOSHI;
+        const localBest = JSON.parse(localStorage.getItem(storageKey + '_best_' + coin) || '0');
+        const best = Math.max(localBest || 0, playerAmountVal);
+        try { localStorage.setItem(storageKey + '_best_' + coin, String(best)); } catch(e) {}
+        const rows = [
+            {name:'Вы (Игрок)', amount:playerAmountVal, isMe:true},
+            {name:'Сатоши', amount:Math.max(0.12, best * 0.84)},
+            {name:'CryptoFox', amount:Math.max(0.08, best * 0.63)},
+            {name:'BlockMaster', amount:Math.max(0.04, best * 0.41)},
+            {name:'MoonMiner', amount:Math.max(0.02, best * 0.26)}
+        ].sort((a,b)=>b.amount-a.amount);
+        leaderboardContainer.innerHTML=rows.map((l,i)=>`
+            <div class="item-card" style="${l.isMe?'border:2px solid var(--theme-color);background:rgba(247,147,26,0.12);':''}">
+                <div style="display:flex;gap:14px;align-items:center;">
+                    <div style="font-weight:900;font-size:18px;color:var(--theme-color);min-width:32px;">#${i+1}</div>
+                    <div>
+                        <div style="font-weight:800;font-size:14px;">${l.name} ${l.isMe?'<span style="background:var(--theme-color);color:#fff;font-size:10px;padding:2px 6px;border-radius:6px;">ВЫ</span>':''}</div>
+                        <div style="font-size:12px;color:var(--subtext);">${l.amount.toFixed(2)} ${coin}</div>
+                    </div>
+                </div>
+            </div>`).join('');
+    }
+
+    // Динамический UI обновляется редко; игровая экономика считается без DOM-операций.
+    let lastUiPaint = 0, lastEventPaint = -1, lastSaveStats = 0, lastTickTime = performance.now();
+    function formatTime(seconds){ seconds=Math.max(0,Math.ceil(seconds)); return `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`; }
+    function updateMarketRates(now){
+        for(const key of ['BTC','ETH','LTC']){
+            const c=state.coins[key];if(!c.baseRateUsd)c.baseRateUsd=c.rateUsd;
+            if(!c.rateNextUpdate||now>=c.rateNextUpdate){
+                const drift=(Math.random()-.5)*.10;
+                c.rateTarget=Math.max(c.baseRateUsd*.55,Math.min(c.baseRateUsd*1.55,c.rateUsd*(1+drift)));
+                c.rateNextUpdate=now+10000+Math.random()*12000;
+            }
+            c.rateUsd+=(c.rateTarget-c.rateUsd)*.025;
+        }
+    }
+
+    function updateEventUI(){
+        const status=document.getElementById('eventWidgetStatus'), title=document.getElementById('eventWidgetTitle'), desc=document.getElementById('eventWidgetDesc'), timer=document.getElementById('eventWidgetTimer');
+        if(state.activeEvent){
+            status.innerText=t('active'); title.innerText=state.activeEvent.title;
+            if(desc) desc.innerText=state.activeEvent.desc; document.querySelector('.event-widget-topleft')?.setAttribute('data-event',state.activeEvent.id);
+            timer.innerText=`${t('end')} ${formatTime(state.activeEvent.timeLeft)}`;
+        } else {
+            status.innerText=t('waiting'); title.innerText=t('stable');
+            if(desc) desc.innerText='Рынок спокоен. Следующее событие начнётся случайно через несколько минут.'; document.querySelector('.event-widget-topleft')?.removeAttribute('data-event');
+            timer.innerText=`${t('next')} ${formatTime(state.nextEventIn)}`;
+        }
+    }
+    function updateRealtimePanels(){
+        const coin=state.coins[state.currentCoin];
+        // Кнопки улучшений меняют доступность сразу после изменения баланса, без повторного входа во вкладку.
+        [coin.clickUpgrades,coin.autoUpgrades].forEach(list=>list.forEach(u=>{
+            const btn=document.querySelector(`button[onclick=\"buyUpgrade('click', '${u.id}')\"]`) || document.querySelector(`button[onclick=\"buyUpgrade('auto', '${u.id}')\"]`);
+            if(btn){ btn.disabled=coin.satoshis<getUpgradeCost(u); }
+        }));
+        document.querySelectorAll('#luxuryContainer .luxury-card').forEach((card,i)=>{
+            const item=state.luxury[i]; if(!item)return;
+            const btn=card.querySelector('.buy-btn'); if(btn) btn.disabled=item.bought || state.usd<item.cost;
+        });
+        updateTasksRealtime();
+        if(document.getElementById('tab-leaders').classList.contains('active')){
+            const player=leaderboardContainer.querySelector('[style*=\"border: 2px solid\"]');
+            if(player){ const entry=player.querySelector('div > div:last-child div:last-child'); if(entry) entry.innerText=`${formatCompact(state.coins[currentLeaderTab].satoshis/SATOSHI)} ${currentLeaderTab}`; }
+        }
+    }
+
+    function updateUIFast(){
+        const coin=state.coins[state.currentCoin];
+        balanceDisplay.innerText=`${formatCrypto(coin.satoshis)} ${state.currentCoin}`;
+        usdDisplay.innerText=formatUSD(state.usd);
+        clickRateDisplay.innerText=`+${formatCrypto(getClickPower(state.currentCoin))} ${state.currentCoin}${t('perClick')}`;
+        incomeRateDisplay.innerText=`+${formatCrypto(getAutoPower(state.currentCoin))} ${state.currentCoin}${t('perSecond')}`;
+        const rebirthCost=getRebirthCost(state.currentCoin);
+        rebirthBtn.innerText=`${t('halvingBtn')} (${formatCrypto(rebirthCost)} ${state.currentCoin})`;
+        rebirthBtn.disabled=coin.satoshis<rebirthCost;
+    }
+    function updateFullUI(){
+        if(cacheDirty) recalcPowerCache();
+        const coin=state.coins[state.currentCoin];
+        coinIcon.innerHTML=SVG_ICONS[state.currentCoin];
+        coinTitle.innerText=`${t('balance')} ${state.currentCoin}`;
+        document.getElementById('currentRateText').innerText=`1 ${state.currentCoin} = ${formatUSD(coin.rateUsd)}`;
+        rebirthDesc.innerHTML=t('halvingDesc',{coin:state.currentCoin,mult:coin.multiplier*2});
+        updateUIFast(); renderUpgrades(); renderLuxury(); renderBackgrounds(); renderTasks(); renderLeaders(); updateEventUI(); hydrateUiIcons(); updateExchangePreview();
+    }
+    function gameLoop(now){
+        if(!gamePaused){
+            const dt=Math.min((now-lastTickTime)/1000,.25); lastTickTime=now;
+            updateMarketRates(now);
+            if(cacheDirty) recalcPowerCache();
+            for(const cKey of ['BTC','ETH','LTC']){ const auto=powerCache.auto[cKey]; if(auto>0){ const add=auto*dt; state.coins[cKey].satoshis+=add; state.stats.farmedSatoshis[cKey]+=add; } }
+            if(state.activeEvent){ state.activeEvent.timeLeft-=dt; if(state.activeEvent.timeLeft<=0){ showToast('Событие завершилось!',''); state.activeEvent=null; state.nextEventIn=getRandomWaitTime(); cacheDirty=true; updateEventUI(); saveGame(false); } }
+            else { state.nextEventIn-=dt; if(state.nextEventIn<=0){ triggerMarketEvent(); } }
+            if(now-lastUiPaint>=80){updateUIFast();updateRealtimePanels();if(document.getElementById('tab-exchange').classList.contains('active'))updateExchangePreview();lastUiPaint=now;}
+            const eventSecond=state.activeEvent?Math.ceil(state.activeEvent.timeLeft):Math.ceil(state.nextEventIn); if(eventSecond!==lastEventPaint){ updateEventUI(); lastEventPaint=eventSecond; }
+            if(now-lastSaveStats>=2000){ saveLocal(); lastSaveStats=now; }
+        } else { lastTickTime=now; }
+    
+    // Удаляем случайные текстовые артефакты "/n"/"/n/n", которые иногда появляются при вставке HTML.
+    function cleanTextArtifacts(){
+        const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+        const nodes=[]; let n;
+        while((n=walker.nextNode())) nodes.push(n);
+        nodes.forEach(node=>{
+            const v=node.nodeValue.trim();
+            if(v==='/n' || v==='/n/n' || v==='\\n' || v==='\\n\\n') node.remove();
+        });
+    }
+    cleanTextArtifacts();
+    requestAnimationFrame(gameLoop);
+    }
+
+    // Генератор случайных рыночных событий
+    function triggerMarketEvent(){
+        const events=[
+            {id:'bullrun',title:'БУЛЛРАН',desc:'Рынок резко растёт: доход от кликов и авто-майнинга x2. Это период сильного роста цен и спроса.',duration:180},
+            {id:'altseason',title:'АЛЬТСЕЗОН',desc:'Альткоины входят в сильную фазу: доход ETH и LTC x2.5. BTC не получает этот бонус.',duration:180},
+            {id:'clickboost',title:'КЛИК-БУСТ',desc:'Ручной майнинг усиливается: каждый клик приносит в 2 раза больше криптовалюты.',duration:180}
+        ];
+        const ev={...events[Math.floor(Math.random()*events.length)],timeLeft:180};
+        state.activeEvent=ev; cacheDirty=true; updateEventUI(); AudioEngine.playEvent(); showToast(`Началось событие: ${ev.title}. ${ev.desc}`,''); saveGame(true);
+    }
+
+    // Списки больше не перерисовываются по таймеру — позиция скролла остается стабильной.
+
+    document.addEventListener('visibilitychange',()=>{ if(document.hidden) pauseGame(); else resumeGame(); });
+    window.addEventListener('pagehide',()=>saveGame(true));
+    window.addEventListener('beforeunload',()=>saveLocal());
+
+    // Справка по управлению
+    const helpOverlay=document.getElementById('helpOverlay');
+    const helpGameBtn=document.getElementById('helpGameBtn');
+    const helpCloseBtn=document.getElementById('helpCloseBtn');
+    function closeHelp(){ helpOverlay?.classList.remove('open'); helpOverlay?.setAttribute('aria-hidden','true'); }
+    helpGameBtn?.addEventListener('click',()=>{ AudioEngine.init(); AudioEngine.playBtn(); helpOverlay.classList.add('open'); helpOverlay.setAttribute('aria-hidden','false'); });
+    helpCloseBtn?.addEventListener('click',closeHelp);
+    helpOverlay?.addEventListener('click',e=>{if(e.target===helpOverlay)closeHelp();});
+
+    // Полный сброс прогресса с двойным подтверждением.
+    document.getElementById('resetGameBtn').addEventListener('click',()=>{
+        AudioEngine.init();
+        if(!confirm('Сбросить ВСЁ? Баланс, улучшения, роскошь, задания, халвинги и фоны будут удалены.')) return;
+        if(!confirm('Последнее предупреждение: восстановить прогресс после сброса будет нельзя. Продолжить?')) return;
+        try{ localStorage.removeItem(storageKey); }catch(e){}
+        const fresh={usd:0,currentCoin:'BTC',theme:'dark',bgStyle:'default',stats:{totalClicks:0,tradedUsd:0,farmedSatoshis:{BTC:0,ETH:0,LTC:0},accumulatedUsd:0},activeEvent:null,nextEventIn:getRandomWaitTime(),coins:{},luxury:[],taskState:{clicksTier:0,btcTier:0,ethTier:0,ltcTier:0,usdTier:0,tradeTier:0,luxuryTier:0}};
+        fresh.coins={
+            BTC:{satoshis:0,multiplier:1,rateUsd:65000,baseRateUsd:65000,rateTarget:65000,rateNextUpdate:0,baseRebirthCost:1*SATOSHI,rebirthCount:0,clickUpgrades:generateUpgrades('click','btc',10,1,1.85,1.65),autoUpgrades:generateUpgrades('auto','btc',25,1,1.9,1.7)},
+            ETH:{satoshis:0,multiplier:1,rateUsd:3500,baseRateUsd:3500,rateTarget:3500,rateNextUpdate:0,baseRebirthCost:10*SATOSHI,rebirthCount:0,clickUpgrades:generateUpgrades('click','eth',15,5,1.8,1.6),autoUpgrades:generateUpgrades('auto','eth',30,2,1.85,1.65)},
+            LTC:{satoshis:0,multiplier:1,rateUsd:85,baseRateUsd:85,rateTarget:85,rateNextUpdate:0,baseRebirthCost:100*SATOSHI,rebirthCount:0,clickUpgrades:generateUpgrades('click','ltc',20,20,1.75,1.55),autoUpgrades:generateUpgrades('auto','ltc',40,8,1.8,1.6)}
+        };
+        fresh.luxury=[
+            {id:'lux1',name:'iPhone 16 Pro Max',cost:1200,bought:false,icon:'📱',perk:'+2% ко всем доходам'},{id:'lux2',name:'AirPods Max Gold',cost:2500,bought:false,icon:'🎧',perk:'+3% к мощи клика'},{id:'lux3',name:'Игровой Сетап Ultimate',cost:5000,bought:false,icon:'🖥️',perk:'+5% к мощи клика'},{id:'lux4',name:'Мотоцикл Ducati Panigale',cost:15000,bought:false,icon:'🏍️',perk:'+5% к авто-майнингу'},{id:'lux5',name:'Часы Rolex Daytona',cost:35000,bought:false,icon:'⌚',perk:'+7% к авто-майнингу'},{id:'lux6',name:'Porsche 911 GT3 RS',cost:75000,bought:false,icon:'🏎️',perk:'+8% ко всем доходам'},{id:'lux7',name:'Tesla Model S Plaid',cost:120000,bought:false,icon:'⚡',perk:'+10% к авто-майнингу'},{id:'lux8',name:'Ferrari SF90 Stradale',cost:250000,bought:false,icon:'🏎️',perk:'+12% к клику'},{id:'lux9',name:'Bugatti Chiron Pur Sport',cost:500000,bought:false,icon:'🏎️',perk:'+15% к клику'},{id:'lux10',name:'Вертолет Sikorsky',cost:850000,bought:false,icon:'🚁',perk:'+15% к авто-майнингу'},{id:'lux11',name:'Пляжная Вилла в Майами',cost:1500000,bought:false,icon:'🏖️',perk:'+15% ко всему'},{id:'lux12',name:'Замок во Франции',cost:3500000,bought:false,icon:'🏰',perk:'+18% ко всем доходам'},{id:'lux13',name:'Джет Gulfstream G650',cost:8000000,bought:false,icon:'✈️',perk:'+20% к авто-майнингу'},{id:'lux14',name:'Суперъяхта 80m',cost:15000000,bought:false,icon:'🛥️',perk:'+20% к выгоде обмена'},{id:'lux15',name:'Небоскреб в Нью-Йорке',cost:35000000,bought:false,icon:'🏢',perk:'+25% ко всем доходам'},{id:'lux16',name:'Частный Остров Карибы',cost:100000000,bought:false,icon:'🏝️',perk:'+30% ко всему'},{id:'lux17',name:'Корабль Falcon Heavy',cost:250000000,bought:false,icon:'🚀',perk:'+35% к клику'},{id:'lux18',name:'Лунная База Alpha',cost:500000000,bought:false,icon:'🪐',perk:'+50% ко всем доходам'},{id:'lux19',name:'Орбитальная Станция',cost:1200000000,bought:false,icon:'🛰️',perk:'+60% к авто-майнингу'},{id:'lux20',name:'Геотермальный Вулкан',cost:3000000000,bought:false,icon:'🌋',perk:'+70% ко всем доходам'},{id:'lux21',name:'Марсианская Колония',cost:8000000000,bought:false,icon:'🔴',perk:'+80% ко всему'},{id:'lux22',name:'Спутники Starlink Pro',cost:20000000000,bought:false,icon:'🛰️',perk:'+100% к клику'},{id:'lux23',name:'Инопланетный Артефакт',cost:50000000000,bought:false,icon:'🛸',perk:'+120% к авто-майнингу'},{id:'lux24',name:'Звездный Крейсер',cost:150000000000,bought:false,icon:'⭐',perk:'+150% ко всем доходам'},{id:'lux25',name:'Квантовый Портал',cost:400000000000,bought:false,icon:'🌀',perk:'+200% к клику'},{id:'lux26',name:'Сфера Дайсона',cost:1000000000000,bought:false,icon:'☀️',perk:'+250% ко всем доходам'},{id:'lux27',name:'Галактическая Империя',cost:3000000000000,bought:false,icon:'🌌',perk:'+300% ко всем доходам'},{id:'lux28',name:'Машина Времени',cost:10000000000000,bought:false,icon:'⌛',perk:'+400% ко всем доходам'},{id:'lux29',name:'Матрица Судьбы',cost:30000000000000,bought:false,icon:'🔮',perk:'+500% ко всем доходам'},{id:'lux30',name:'Мультивселенный Реактор',cost:100000000000000,bought:false,icon:'🌌',perk:'+700% ко всем доходам'},{id:'lux31',name:'Созвездие Абсолюта',cost:500000000000000,bought:false,icon:'🪐',perk:'+1000% ко всем доходам'},{id:'lux32',name:'Владыка Крипто-Вселенной',cost:2000000000000000,bought:false,icon:'👑',perk:'+2000% ко всем доходам'}];
+        state=fresh; cacheDirty=true; currentLeaderTab='BTC'; document.documentElement.setAttribute('data-theme','dark'); document.body.setAttribute('data-bg','default'); document.body.setAttribute('data-coin','BTC'); updateFullUI(); saveGame(true); showToast('Весь прогресс сброшен. Игра начата заново.','');
+    });
+
+    // Защита игровой области от системного контекстного меню и перетаскивания.
+    document.addEventListener('contextmenu', e=>e.preventDefault());
+    document.addEventListener('dragstart', e=>e.preventDefault());
+
+    // Инициализация
+    document.body.setAttribute('data-bg',state.bgStyle||'default');
+    document.body.setAttribute('data-coin',state.currentCoin||'BTC');
+    document.documentElement.setAttribute('data-theme',state.theme||'dark');
+    cacheDirty=true; updateFullUI(); applyLanguage(); hydrateUiIcons(); updateExchangePreview();
+    requestAnimationFrame(gameLoop);
+
+</script>
+</body>
+</html>
